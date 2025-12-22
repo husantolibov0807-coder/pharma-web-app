@@ -62,7 +62,8 @@
         document.getElementById('doza').innerText = params.get('doza') || '-';
         document.getElementById('zavod').innerText = params.get('zavod') || 'Nomaʼlum zavod';
         document.getElementById('narx').innerText = (params.get('price') || '0') + " so'm";
-
+        const aiRaw = params.get('ai_data');
+        document.getElementById('ai-text').innerText = aiRaw ? decodeURIComponent(aiRaw) : "Tahlil topilmadi.";
         // AI ma'lumotini decode qilish (BU ENG MUHIM QISM)
         const rawAiData = params.get('ai_data');
         if (rawAiData) {
