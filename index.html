@@ -121,9 +121,18 @@
                     
                     // TUGMA BOSILGANDA: Botga xabar yuboradi va WebApp yopiladi
                     btn.onclick = () => {
-                        // Botga dori nomini matn ko'rinishida yuboramiz
-                        tg.sendData(doriNomi); 
-                        tg.close();
+                        try {
+                            // 1. Botga dori nomini yuboramiz
+                            tg.sendData(doriNomi); 
+                    
+                            // 2. Bir oz kutib WebApp-ni yopamiz (ma'lumot ketishiga ulgurishi uchun)
+                            setTimeout(() => {
+                                tg.close();
+                            }, 150);
+                        } catch (e) {
+                            console.error("Xato yuz berdi:", e);
+                            alert("Botga ma'lumot yuborib bo'lmadi");
+                        }
                     };
                     takliflarDiv.appendChild(btn);
                 }
