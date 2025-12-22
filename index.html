@@ -44,6 +44,8 @@
 
         // Botdan kelgan ma'lumotlarni o'qish (misol uchun URL orqali)
         const params = new URLSearchParams(window.location.search);
+        const aiData = params.get('ai_data') || "AI tahlili yuklanmoqda...";
+        document.getElementById('ai-text').innerText = aiData;
         document.getElementById('dori-nomi').innerText = params.get('name') || 'Dori nomi';
         document.getElementById('mnn').innerText = params.get('mnn') || 'Tarkibi';
         document.getElementById('doza').innerText = params.get('doza') || '-';
