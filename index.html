@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding: 15px; }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .badge { background: #0088cc; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; }
+        .price { color: #2ecc71; font-size: 20px; font-weight: bold; margin: 10px 0; }
+        .ai-section { background: #eef9ff; border-left: 4px solid #0088cc; padding: 10px; margin-top: 15px; font-style: italic; }
+        button { width: 100%; padding: 12px; background: #0088cc; color: white; border: none; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <span class="badge">PRO REJIM</span>
+        <h2 id="dori-nomi">Yuklanmoqda...</h2>
+        <p id="mnn" style="color: #666;"></p>
+        
+        <div class="price" id="narx"></div>
+        
+        <table width="100%" style="border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px 0;">⚖️ Doza/Shakl:</td>
+                <td id="doza" align="right"></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0;">🏢 Ishlab chiqaruvchi:</td>
+                <td id="zavod" align="right"></td>
+            </tr>
+        </table>
+
+        <div class="ai-section">
+            <strong>🤖 AI Tahlili:</strong>
+            <p id="ai-text">Ushbu dori bo'yicha ma'lumotlar tahlil qilinmoqda...</p>
+        </div>
+
+        <button onclick="Telegram.WebApp.close()">Yopish</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Oynani to'liq ochish
+
+        // Botdan kelgan ma'lumotlarni o'qish (misol uchun URL orqali)
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('dori-nomi').innerText = params.get('name') || 'Dori nomi';
+        document.getElementById('mnn').innerText = params.get('mnn') || 'Tarkibi';
+        document.getElementById('doza').innerText = params.get('doza') || '-';
+        document.getElementById('zavod').innerText = params.get('zavod') || '-';
+        document.getElementById('narx').innerText = (params.get('price') || '0') + " so'm";
+    </script>
+</body>
+</html>
