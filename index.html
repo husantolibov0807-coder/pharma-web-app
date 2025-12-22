@@ -6,18 +6,26 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; color: #333; padding: 15px; line-height: 1.5; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; margin-bottom: 20px; }
         .badge { background: #0088cc; color: white; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .price { color: #2ecc71; font-size: 22px; font-weight: bold; margin: 15px 0; }
+        
+        /* AI Bo'limlari stili */
         .ai-section { background: #eef9ff; border-left: 4px solid #0088cc; padding: 15px; margin-top: 15px; border-radius: 0 10px 10px 0; }
-        #ai-text { font-style: normal; white-space: pre-wrap; font-size: 14px; color: #2c3e50; margin-top: 8px; }
+        .konspekt-section { background: #fff4e6; border-left: 4px solid #ff922b; padding: 15px; margin-top: 15px; border-radius: 0 10px 10px 0; }
+        .taklif-section { margin-top: 15px; }
+        
+        .taklif-tag { display: inline-block; background: #e9ecef; color: #495057; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin: 4px; border: 1px solid #dee2e6; }
+        
+        #ai-text, #ai-konspekt { font-size: 14px; color: #2c3e50; margin-top: 8px; white-space: pre-wrap; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         tr { border-bottom: 1px solid #eee; }
         td { padding: 12px 0; }
         .label { color: #666; font-weight: 500; }
         .value { text-align: right; font-weight: bold; color: #333; }
-        button { width: 100%; padding: 14px; background: #0088cc; color: white; border: none; border-radius: 12px; margin-top: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        button:active { background: #006699; }
+        
+        button { width: 100%; padding: 14px; background: #0088cc; color: white; border: none; border-radius: 12px; margin-top: 25px; font-size: 16px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -46,6 +54,18 @@
             <div id="ai-text">Ma'lumotlar tahlil qilinmoqda...</div>
         </div>
 
+        <div class="konspekt-section" id="section-konspekt" style="display:none;">
+            <strong style="color: #e67e22; display: flex; align-items: center; gap: 5px;">
+                <span>📚</span> Guruh haqida konspekt:
+            </strong>
+            <div id="ai-konspekt"></div>
+        </div>
+
+        <div class="taklif-section" id="section-takliflar" style="display:none;">
+            <strong style="color: #333; font-size: 14px; margin-left: 5px;">💊 O'xshash dori vositalari:</strong>
+            <div id="ai-takliflar" style="margin-top: 10px;"></div>
+        </div>
+
         <button onclick="Telegram.WebApp.close()">Sahifani yopish</button>
     </div>
 
@@ -56,25 +76,49 @@
 
         const params = new URLSearchParams(window.location.search);
 
-        // Ma'lumotlarni o'qish va joylashtirish
+        // Baza ma'lumotlarini o'rnatish
         document.getElementById('dori-nomi').innerText = params.get('name') || 'Nomaʼlum dori';
         document.getElementById('mnn').innerText = params.get('mnn') || 'Tarkib maʼlumoti yoʻq';
         document.getElementById('doza').innerText = params.get('doza') || '-';
         document.getElementById('zavod').innerText = params.get('zavod') || 'Nomaʼlum zavod';
         document.getElementById('narx').innerText = (params.get('price') || '0') + " so'm";
-        const aiRaw = params.get('ai_data');
-        document.getElementById('ai-text').innerText = aiRaw ? decodeURIComponent(aiRaw) : "Tahlil topilmadi.";
-        // AI ma'lumotini decode qilish (BU ENG MUHIM QISM)
+        
+        // AI ma'lumotlarini parslash va joylashtirish
         const rawAiData = params.get('ai_data');
         if (rawAiData) {
-            try {
-                // URL-kodlangan matnni o'zbek tilidagi holatiga qaytaradi
-                document.getElementById('ai-text').innerText = decodeURIComponent(rawAiData);
-            } catch (e) {
-                document.getElementById('ai-text').innerText = "Maʼlumotni oʻqishda xatolik yuz berdi.";
+            const fullText = decodeURIComponent(rawAiData);
+            
+            // AI javobini bo'laklarga ajratish (Regex yordamida)
+            const infoPart = fullText.match(/INFO:([\s\S]*?)(?=GURUHI:|$)/i)?.[1] || fullText;
+            const konspektPart = fullText.match(/KONSPEKT:([\s\S]*?)(?=TAKLIFLAR:|$)/i)?.[1] || "";
+            const takliflarPart = fullText.match(/TAKLIFLAR:([\s\S]*)/i)?.[1] || "";
+
+            // 1. Asosiy info
+            document.getElementById('ai-text').innerText = infoPart.trim();
+
+            // 2. Konspekt (agar bo'lsa)
+            if (konspektPart.trim()) {
+                document.getElementById('section-konspekt').style.display = 'block';
+                document.getElementById('ai-konspekt').innerText = konspektPart.trim();
+            }
+
+            // 3. Takliflar (agar bo'lsa)
+            if (takliflarPart.trim()) {
+                document.getElementById('section-takliflar').style.display = 'block';
+                const takliflarDiv = document.getElementById('ai-takliflar');
+                const dorilar = takliflarPart.split(',');
+                
+                dorilar.forEach(dori => {
+                    if (dori.trim()) {
+                        const span = document.createElement('span');
+                        span.className = 'taklif-tag';
+                        span.innerText = dori.trim();
+                        takliflarDiv.appendChild(span);
+                    }
+                });
             }
         } else {
-            document.getElementById('ai-text').innerText = "Ushbu dori uchun AI tahlili mavjud emas.";
+            document.getElementById('ai-text').innerText = "AI tahlili yuklanmadi.";
         }
     </script>
 </body>
