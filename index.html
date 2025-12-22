@@ -70,56 +70,68 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); 
-        tg.ready();
+    const tg = window.Telegram.WebApp;
+    tg.expand(); 
+    tg.ready();
 
-        const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
 
-        // Baza ma'lumotlarini o'rnatish
-        document.getElementById('dori-nomi').innerText = params.get('name') || 'Nomaʼlum dori';
-        document.getElementById('mnn').innerText = params.get('mnn') || 'Tarkib maʼlumoti yoʻq';
-        document.getElementById('doza').innerText = params.get('doza') || '-';
-        document.getElementById('zavod').innerText = params.get('zavod') || 'Nomaʼlum zavod';
-        document.getElementById('narx').innerText = (params.get('price') || '0') + " so'm";
+    // 1. Asosiy ma'lumotlarni o'rnatish
+    document.getElementById('dori-nomi').innerText = params.get('name') || 'Nomaʼlum dori';
+    document.getElementById('mnn').innerText = params.get('mnn') || 'Tarkib maʼlumoti yoʻq';
+    document.getElementById('doza').innerText = params.get('doza') || '-';
+    document.getElementById('zavod').innerText = params.get('zavod') || 'Nomaʼlum zavod';
+    document.getElementById('narx').innerText = (params.get('price') || '0') + " so'm";
+    
+    // 2. AI ma'lumotlarini qabul qilish va bo'lish
+    const rawAiData = params.get('ai_data');
+    if (rawAiData) {
+        const fullText = decodeURIComponent(rawAiData);
         
-        // AI ma'lumotlarini parslash va joylashtirish
-        const rawAiData = params.get('ai_data');
-        if (rawAiData) {
-            const fullText = decodeURIComponent(rawAiData);
-            
-            // AI javobini bo'laklarga ajratish (Regex yordamida)
-            const infoPart = fullText.match(/INFO:([\s\S]*?)(?=GURUHI:|$)/i)?.[1] || fullText;
-            const konspektPart = fullText.match(/KONSPEKT:([\s\S]*?)(?=TAKLIFLAR:|$)/i)?.[1] || "";
-            const takliflarPart = fullText.match(/TAKLIFLAR:([\s\S]*)/i)?.[1] || "";
+        // Regex orqali qismlarga ajratish
+        const infoPart = fullText.match(/INFO:([\s\S]*?)(?=GURUHI:|$)/i)?.[1] || fullText;
+        const konspektPart = fullText.match(/KONSPEKT:([\s\S]*?)(?=TAKLIFLAR:|$)/i)?.[1] || "";
+        const takliflarPart = fullText.match(/TAKLIFLAR:([\s\S]*)/i)?.[1] || "";
 
-            // 1. Asosiy info
-            document.getElementById('ai-text').innerText = infoPart.trim();
+        // Ma'lumotlarni sahifaga chiqarish
+        document.getElementById('ai-text').innerText = infoPart.trim();
 
-            // 2. Konspekt (agar bo'lsa)
-            if (konspektPart.trim()) {
-                document.getElementById('section-konspekt').style.display = 'block';
-                document.getElementById('ai-konspekt').innerText = konspektPart.trim();
-            }
-
-            // 3. Takliflar (agar bo'lsa)
-            if (takliflarPart.trim()) {
-                document.getElementById('section-takliflar').style.display = 'block';
-                const takliflarDiv = document.getElementById('ai-takliflar');
-                const dorilar = takliflarPart.split(',');
-                
-                dorilar.forEach(dori => {
-                    if (dori.trim()) {
-                        const span = document.createElement('span');
-                        span.className = 'taklif-tag';
-                        span.innerText = dori.trim();
-                        takliflarDiv.appendChild(span);
-                    }
-                });
-            }
-        } else {
-            document.getElementById('ai-text').innerText = "AI tahlili yuklanmadi.";
+        if (konspektPart.trim()) {
+            document.getElementById('section-konspekt').style.display = 'block';
+            document.getElementById('ai-konspekt').innerText = konspektPart.trim();
         }
-    </script>
+
+        // 3. TAKLIFLARNI TUGMA SIFATIDA YARATISH (YANGI QISM)
+        if (takliflarPart.trim()) {
+            document.getElementById('section-takliflar').style.display = 'block';
+            const takliflarDiv = document.getElementById('ai-takliflar');
+            takliflarDiv.innerHTML = ''; // Tozalash
+
+            const dorilar = takliflarPart.split(',');
+            
+            dorilar.forEach(dori => {
+                const doriNomi = dori.trim();
+                if (doriNomi) {
+                    const btn = document.createElement('button');
+                    btn.className = 'taklif-tag'; // CSS'dagi stil
+                    btn.style.width = 'auto'; // Default 100% ni bekor qilish
+                    btn.style.margin = '5px';
+                    btn.style.cursor = 'pointer';
+                    btn.innerText = doriNomi;
+                    
+                    // TUGMA BOSILGANDA: Botga xabar yuboradi va WebApp yopiladi
+                    btn.onclick = () => {
+                        // Botga dori nomini matn ko'rinishida yuboramiz
+                        tg.sendData(doriNomi); 
+                        tg.close();
+                    };
+                    takliflarDiv.appendChild(btn);
+                }
+            });
+        }
+    } else {
+        document.getElementById('ai-text').innerText = "AI tahlili yuklanmadi.";
+    }
+</script>
 </body>
 </html>
