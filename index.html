@@ -119,16 +119,15 @@
                     btn.style.cursor = 'pointer';
                     btn.innerText = doriNomi;
                     
-                    btn.onclick = () => {
-                        // 1. Agar WebApp Keyboard tugma orqali ochilgan bo'lsa (ideal holat)
-                        if (window.Telegram.WebApp.sendData) {
-                            window.Telegram.WebApp.sendData(doriNomi);
-                        } 
-                        // 2. Agar Inline tugma bo'lsa, SwitchInlineQuery dan foydalanamiz
-                        else {
-                            window.Telegram.WebApp.switchInlineQuery(doriNomi);
-                        }
-                        window.Telegram.WebApp.close();
+                    btn.onclick = async () => {
+                        // 1. WebApp-ni yopmasdan, sarlavhani o'zgartiramiz
+                        document.getElementById('dori-nomi').innerText = "AI tahlil qilmoqda: " + doriNomi;
+                        document.getElementById('ai-text').innerText = "Kuting, AI ushbu analog dori haqida ma'lumot tayyorlayapti...";
+
+                        // 2. Bot orqali yangi ma'lumot so'rash (Xabar yuborish)
+                        // Inline WebApp-larda biz ma'lumotni tg.sendData emas, query orqali boshqarishimiz osonroq
+                        tg.sendData(doriNomi); 
+                        // Agar bot terminalda handle_webapp_data bo'lsa, u yangi ma'lumotni chiqaradi
                     };
                     takliflarDiv.appendChild(btn);
                 }
