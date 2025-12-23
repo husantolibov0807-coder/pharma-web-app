@@ -119,14 +119,16 @@
                     btn.style.cursor = 'pointer';
                     btn.innerText = doriNomi;
                     
-                    // TUGMA BOSILGANDA: Botga xabar yuboradi va WebApp yopiladi
                     btn.onclick = () => {
-                                            if (tg.sendData) {
-                            tg.sendData(doriNomi);
-                        } else {
-                            alert("Iltimos, ushbu dorini nusxalab botga yozing: " + doriNomi);
+                        // 1. Agar WebApp Keyboard tugma orqali ochilgan bo'lsa (ideal holat)
+                        if (window.Telegram.WebApp.sendData) {
+                            window.Telegram.WebApp.sendData(doriNomi);
+                        } 
+                        // 2. Agar Inline tugma bo'lsa, SwitchInlineQuery dan foydalanamiz
+                        else {
+                            window.Telegram.WebApp.switchInlineQuery(doriNomi);
                         }
-                        tg.close();
+                        window.Telegram.WebApp.close();
                     };
                     takliflarDiv.appendChild(btn);
                 }
