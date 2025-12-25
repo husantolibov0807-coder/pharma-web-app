@@ -43,26 +43,29 @@
             container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
         
             try {
-                // 3. API-ga so'rov yuborish
-                // Eslatma: Agar WebApp va API bitta Vercel loyihasida bo'lsa, 
-                // to'liq manzil o'rniga '/api/chat' dan foydalanish kifoya
+                // 3. API-ga POST so'rov yuborish
                 const response = await fetch('/api/chat', { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ message: text }) // Kalit nomi Backend bilan bir xil: "message"
                 });
-                
+        
+                if (!response.ok) {
+                    throw new Error(`Server xatosi: ${response.status}`);
+                }
+        
                 const data = await response.json();
         
-                // 4. Javobni ekranga chiqarish
-                // Backend 'reply' kaliti bilan javob qaytaryapti
+                // 4. Javobni ekranga chiqarish (Backend "reply" qaytaradi)
                 document.getElementById(loadingId).innerText = data.reply;
                 
             } catch (e) {
-                console.error("Xatolik:", e);
-                document.getElementById(loadingId).innerText = "Xatolik yuz berdi. Backend bilan bog'lanib bo'lmadi.";
+                console.error("Fetch xatosi:", e);
+                document.getElementById(loadingId).innerText = "Xatolik: " + e.message;
             }
-            container.scrollTop = container.scrollHeight;
+            container.scrollTop = container.scrollHeight
         }
     </script>
 </body>
