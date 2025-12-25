@@ -31,18 +31,19 @@
         tg.expand(); // WebApp oynasini to'liq ochish
 
         async function askAI() {
-            const query = document.getElementById('termInput').value;
-            if (!query) return;
+    const query = document.getElementById('termInput').value;
+    if (!query) return;
 
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('result').innerText = '';
-
-            // Botga ma'lumot yuborish
-            tg.sendData(query); 
-            
-            // WebApp oynasini yopish (Ixtiyoriy)
-            // tg.close(); 
-        }
+    // 1. Loader-ni ko'rsatish (shart emas, lekin vizual uchun qolsin)
+    document.getElementById('loader').style.display = 'block';
+    
+    // 2. Ma'lumotni botga yuborish
+    // DIQQAT: Bu funksiya ishlashi bilan WebApp yopilishi kerak
+    tg.sendData(query); 
+    
+    // 3. Oynani majburiy yopish (Bu juda muhim!)
+    tg.close(); 
+}
     </script>
 </body>
 </html>
