@@ -1,28 +1,66 @@
-<div class="card">
-    <h2>📖 Oxford AI Tutor</h2>
-    <div id="chat-box" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 8px;">
-        </div>
-    <input type="text" id="termInput" placeholder="Savolingizni yozing...">
-    <button class="btn" onclick="askAI()">Yuborish</button>
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f0f2f5; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 15px; line-height: 1.4; }
+        .user { align-self: flex-end; background: #0084ff; color: white; border-bottom-right-radius: 2px; }
+        .bot { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        #input-area { background: white; padding: 10px; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 20px; outline: none; }
+        button { background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; }
+        .loading { font-size: 12px; color: #888; margin-left: 5px; display: none; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div class="message bot">Assalomu alaykum! Oxford kitoblari bo'yicha savolingizni bering.</div>
+    </div>
+    <div id="input-area">
+        <input type="text" id="userInput" placeholder="Savol yozing...">
+        <button onclick="sendMessage()">Yuborish</button>
+    </div>
 
-<script>
-    async function askAI() {
-        const input = document.getElementById('termInput');
-        const chatBox = document.getElementById('chat-box');
-        const query = input.value;
-        if (!query) return;
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-        // Foydalanuvchi xabarini ko'rsatish
-        chatBox.innerHTML += `<p><b>Siz:</b> ${query}</p>`;
-        input.value = '';
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const container = document.getElementById('chat-container');
+            const text = input.value.trim();
 
-        // Backend-ga so'rov yuborish
-        const response = await fetch(`/api/chat?message=${encodeURIComponent(query)}`);
-        const data = await response.json();
+            if (!text) return;
 
-        // AI javobini ko'rsatish
-        chatBox.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-</script>
+            // 1. Foydalanuvchi xabarini ekranga chiqarish
+            container.innerHTML += `<div class="message user">${text}</div>`;
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            // 2. Loading ko'rsatish
+            const loadingId = "load-" + Date.now();
+            container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
+
+            try {
+                // 3. API-ga so'rov yuborish (Backend manzilingizni qo'ying)
+                const response = await fetch('https://SIZNING-BACKEND-LINKINGIZ.vercel.app/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: text })
+                });
+                const data = await response.json();
+
+                // 4. Javobni ekranga chiqarish
+                document.getElementById(loadingId).innerText = data.answer;
+            } catch (e) {
+                document.getElementById(loadingId).innerText = "Xatolik yuz berdi. Backend ulanmagan bo'lishi mumkin.";
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
