@@ -51,16 +51,36 @@ def send_telegram_msg(chat_id: int, text: str, reply_markup=None):
         payload["reply_markup"] = reply_markup
     requests.post(url, json=payload)
 
+# Fayl tepasida (importlardan keyin) rejimni saqlash uchun lug'at qo'shing
+user_modes = {} 
+
 @app.post("/api/webhook")
 async def handle_webhook(request: Request):
     data = await request.json()
     
+    # --- 1. CALLBACK QUERY (Tugmalar uchun) ---
+    if "callback_query" in data:
+        callback_data = data["callback_query"]["data"]
+        chat_id = data["callback_query"]["message"]["chat"]["id"]
+        
+        if callback_data == "activate_oxford":
+            user_modes[chat_id] = "oxford" # Rejimni Oxfordga o'zgartirish
+            send_telegram_msg(chat_id, "✅ **Oxford AI rejimi faol.**\n\nIstalgan tibbiy terminni yozing:")
+            return {"status": "ok"}
+        
+        if callback_data == "activate_drugs":
+            user_modes[chat_id] = "drug_search" # Rejimni Doriga o'zgartirish
+            send_telegram_msg(chat_id, "💊 **Dori qidirish rejimi faol.**\n\nDori nomini yozing:")
+            return {"status": "ok"}
+
+    # --- 2. XABARLAR (Message) ---
     if "message" in data:
         chat_id = data["message"]["chat"]["id"]
         text = data["message"].get("text", "")
 
-        # START komandasi - Menyu bilan
+        # START komandasi
         if text == "/start":
+            user_modes[chat_id] = "drug_search" # Start bosganda rejimni reset qilish
             keyboard = {
                 "inline_keyboard": [
                     [{"text": "💊 Dori qidirish (WebApp)", "web_app": {"url": "https://pharma-web-app-31d5.vercel.app/index.html"}}],
@@ -73,28 +93,28 @@ async def handle_webhook(request: Request):
                 "2. **Oxford AI** - Tibbiy terminlar bo'yicha botni o'zida gaplashish."
             )
             send_telegram_msg(chat_id, welcome_text, keyboard)
+            return {"status": "ok"}
 
-        # Agar foydalanuvchi Oxford rejimida bo'lsa yoki shunchaki tekst yozsa
-        elif text and not text.startswith("/"):
-            # Oxford AI javobi
-            wait_msg = f"🔍 '{text}' bo'yicha Oxford kitoblari tahlil qilinmoqda..."
-            send_telegram_msg(chat_id, wait_msg)
+        # Oddiy xabarlarni rejimga qarab yo'naltirish
+        if text and not text.startswith("/"):
+            mode = user_modes.get(chat_id, "drug_search")
+
+            if mode == "oxford":
+                # OXFORD AI LOGIKASI
+                wait_msg = f"🔍 '{text}' bo'yicha Oxford kitoblari tahlil qilinmoqda..."
+                send_telegram_msg(chat_id, wait_msg)
+                answer = get_oxford_response(text)
+                send_telegram_msg(chat_id, answer)
             
-            answer = get_oxford_response(text)
-            send_telegram_msg(chat_id, answer)
-
-    # Tugma bosilganda (Callback Query)
-    elif "callback_query" in data:
-        callback_data = data["callback_query"]["data"]
-        chat_id = data["callback_query"]["message"]["chat"]["id"]
-        
-        if callback_data == "activate_oxford":
-            send_telegram_msg(chat_id, "✅ Oxford AI rejimi faol. Istalgan tibbiy termin yoki kasallik nomini yozing:")
+            else:
+                # DORI QIDIRISH (Sizning mavjud Excel kodingiz)
+                # Bu yerga find_drugs_advanced va process_results funksiyalarini chaqiruvchi kodni qo'ying
+                # Masalan:
+                # results = find_drugs_advanced(text)
+                # await process_results(chat_id, results)
+                pass
 
     return {"status": "ok"}
-
-# Eski WebApp uchun /api/chat yo'lini saqlab qolamiz (xalaqit bermaydi)
-@app.post("/api/chat")
 async def legacy_chat(request: Request):
     req_data = await request.json()
     msg = req_data.get("message")
