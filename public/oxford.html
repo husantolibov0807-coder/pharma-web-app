@@ -26,6 +26,9 @@
     </div>
 
     <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const container = document.getElementById('chat-container');
@@ -33,30 +36,39 @@
         
             if (!text) return;
         
+            // 1. Foydalanuvchi xabarini ekranga chiqarish
             container.innerHTML += `<div class="message user">${text}</div>`;
             input.value = '';
-            
+            container.scrollTop = container.scrollHeight;
+        
+            // 2. Loading ko'rsatish
             const loadingId = "load-" + Date.now();
             container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
             container.scrollTop = container.scrollHeight;
         
             try {
-                // DIQQAT: Manzilni aniq yozamiz
-                const response = await fetch(window.location.origin + '/api/chat', { 
+                // 3. API-ga so'rov yuborish (window.location.origin xatolarni oldini oladi)
+                const response = await fetch(`${window.location.origin}/api/chat`, { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ message: text }) 
                 });
         
                 if (!response.ok) {
+                    const errorText = await response.text();
                     throw new Error(`Xato kodi: ${response.status}`);
                 }
         
                 const data = await response.json();
+        
+                // 4. Javobni ekranga chiqarish
                 document.getElementById(loadingId).innerText = data.reply;
+        
             } catch (e) {
-                document.getElementById(loadingId).innerText = "Backend xatosi: " + e.message;
-                console.error("To'liq xato:", e);
+                console.error("Xatolik tafsiloti:", e);
+                document.getElementById(loadingId).innerText = "Backend bilan bog'lanib bo'lmadi. (Xato: " + e.message + ")";
             }
             container.scrollTop = container.scrollHeight;
         }
