@@ -33,45 +33,31 @@
         
             if (!text) return;
         
-            // 1. Foydalanuvchi xabarini ekranga chiqarish
             container.innerHTML += `<div class="message user">${text}</div>`;
             input.value = '';
-            container.scrollTop = container.scrollHeight;
-        
-            // 2. Loading holati
+            
             const loadingId = "load-" + Date.now();
             container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
             container.scrollTop = container.scrollHeight;
         
             try {
-                // 3. API-ga so'rov yuborish
-                // Eslatma: Vercel-da Frontend va API bitta loyihada bo'lsa, 
-                // /api/chat shaklida yozish eng ishonchlisi
-                const response = await fetch('/api/chat', { 
+                // DIQQAT: Manzilni aniq yozamiz
+                const response = await fetch(window.location.origin + '/api/chat', { 
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: text }) 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
                 });
         
-                // Agar ulanishda muammo bo'lsa (404, 500 va h.k.)
                 if (!response.ok) {
-                    const errorMsg = await response.text();
-                    throw new Error(`Server xatosi (${response.status}): ${errorMsg}`);
+                    throw new Error(`Xato kodi: ${response.status}`);
                 }
         
                 const data = await response.json();
-        
-                // 4. Javobni chiqarish
-                // Backend "reply" kaliti bilan javob qaytaradi
-                document.getElementById(loadingId).innerText = data.reply || "Javob bo'sh qaytdi";
-                
+                document.getElementById(loadingId).innerText = data.reply;
             } catch (e) {
-                console.error("Xatolik tafsiloti:", e);
-                document.getElementById(loadingId).innerText = "⚠️ Xato: " + e.message;
+                document.getElementById(loadingId).innerText = "Backend xatosi: " + e.message;
+                console.error("To'liq xato:", e);
             }
-            
             container.scrollTop = container.scrollHeight;
         }
     </script>
