@@ -38,56 +38,42 @@
             input.value = '';
             container.scrollTop = container.scrollHeight;
         
-            // 2. Loading (yuklanish) xabarini chiqarish
+            // 2. Loading holati
             const loadingId = "load-" + Date.now();
-            container.innerHTML += `<div class="message bot" id="${loadingId}"><span class="loading-dots">... o'ylayapman</span></div>`;
+            container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
             container.scrollTop = container.scrollHeight;
         
             try {
                 // 3. API-ga so'rov yuborish
-                // MUHIM: '/api/chat' manzilini tekshiring
+                // Eslatma: Vercel-da Frontend va API bitta loyihada bo'lsa, 
+                // /api/chat shaklida yozish eng ishonchlisi
                 const response = await fetch('/api/chat', { 
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ message: text }) 
                 });
         
-                // Agar server 404 yoki 500 qaytarsa
+                // Agar ulanishda muammo bo'lsa (404, 500 va h.k.)
                 if (!response.ok) {
-                    const errorData = await response.text();
-                    console.error("Server javobi:", errorData);
-                    throw new Error(`Server xatosi (${response.status})`);
+                    const errorMsg = await response.text();
+                    throw new Error(`Server xatosi (${response.status}): ${errorMsg}`);
                 }
         
                 const data = await response.json();
         
-                // 4. AI javobini ekranga chiqarish
-                // data.reply — chunki Python kodingizda {"reply": ...} qaytyapti
-                const botMessageElement = document.getElementById(loadingId);
-                if (data.reply) {
-                    botMessageElement.innerText = data.reply;
-                } else {
-                    botMessageElement.innerText = "Xabar mazmuni bo'sh qaytdi.";
-                }
+                // 4. Javobni chiqarish
+                // Backend "reply" kaliti bilan javob qaytaradi
+                document.getElementById(loadingId).innerText = data.reply || "Javob bo'sh qaytdi";
                 
             } catch (e) {
-                console.error("Fetch xatosi:", e);
-                document.getElementById(loadingId).innerText = "⚠️ Ulanishda xato: " + e.message;
+                console.error("Xatolik tafsiloti:", e);
+                document.getElementById(loadingId).innerText = "⚠️ Xato: " + e.message;
             }
             
-            // Har doim eng pastga tushirish
             container.scrollTop = container.scrollHeight;
         }
-        
-        // "Enter" tugmasini bosganda ham yuboradigan qilish
-        document.getElementById('userInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
     </script>
 </body>
 </html>
