@@ -38,35 +38,56 @@
             input.value = '';
             container.scrollTop = container.scrollHeight;
         
-            // 2. Loading ko'rsatish
+            // 2. Loading (yuklanish) xabarini chiqarish
             const loadingId = "load-" + Date.now();
-            container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
+            container.innerHTML += `<div class="message bot" id="${loadingId}"><span class="loading-dots">... o'ylayapman</span></div>`;
+            container.scrollTop = container.scrollHeight;
         
             try {
-                // 3. API-ga POST so'rov yuborish
+                // 3. API-ga so'rov yuborish
+                // MUHIM: '/api/chat' manzilini tekshiring
                 const response = await fetch('/api/chat', { 
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json' 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ message: text }) // Kalit nomi Backend bilan bir xil: "message"
+                    body: JSON.stringify({ message: text }) 
                 });
         
+                // Agar server 404 yoki 500 qaytarsa
                 if (!response.ok) {
-                    throw new Error(`Server xatosi: ${response.status}`);
+                    const errorData = await response.text();
+                    console.error("Server javobi:", errorData);
+                    throw new Error(`Server xatosi (${response.status})`);
                 }
         
                 const data = await response.json();
         
-                // 4. Javobni ekranga chiqarish (Backend "reply" qaytaradi)
-                document.getElementById(loadingId).innerText = data.reply;
+                // 4. AI javobini ekranga chiqarish
+                // data.reply — chunki Python kodingizda {"reply": ...} qaytyapti
+                const botMessageElement = document.getElementById(loadingId);
+                if (data.reply) {
+                    botMessageElement.innerText = data.reply;
+                } else {
+                    botMessageElement.innerText = "Xabar mazmuni bo'sh qaytdi.";
+                }
                 
             } catch (e) {
                 console.error("Fetch xatosi:", e);
-                document.getElementById(loadingId).innerText = "Xatolik: " + e.message;
+                document.getElementById(loadingId).innerText = "⚠️ Ulanishda xato: " + e.message;
             }
-            container.scrollTop = container.scrollHeight
+            
+            // Har doim eng pastga tushirish
+            container.scrollTop = container.scrollHeight;
         }
+        
+        // "Enter" tugmasini bosganda ham yuboradigan qilish
+        document.getElementById('userInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
