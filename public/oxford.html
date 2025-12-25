@@ -1,0 +1,28 @@
+<div class="card">
+    <h2>📖 Oxford AI Tutor</h2>
+    <div id="chat-box" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 8px;">
+        </div>
+    <input type="text" id="termInput" placeholder="Savolingizni yozing...">
+    <button class="btn" onclick="askAI()">Yuborish</button>
+</div>
+
+<script>
+    async function askAI() {
+        const input = document.getElementById('termInput');
+        const chatBox = document.getElementById('chat-box');
+        const query = input.value;
+        if (!query) return;
+
+        // Foydalanuvchi xabarini ko'rsatish
+        chatBox.innerHTML += `<p><b>Siz:</b> ${query}</p>`;
+        input.value = '';
+
+        // Backend-ga so'rov yuborish
+        const response = await fetch(`/api/chat?message=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        // AI javobini ko'rsatish
+        chatBox.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
