@@ -26,38 +26,41 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const container = document.getElementById('chat-container');
             const text = input.value.trim();
-
+        
             if (!text) return;
-
+        
             // 1. Foydalanuvchi xabarini ekranga chiqarish
             container.innerHTML += `<div class="message user">${text}</div>`;
             input.value = '';
             container.scrollTop = container.scrollHeight;
-
+        
             // 2. Loading ko'rsatish
             const loadingId = "load-" + Date.now();
             container.innerHTML += `<div class="message bot" id="${loadingId}">... o'ylayapman</div>`;
-
+        
             try {
-                // 3. API-ga so'rov yuborish (Backend manzilingizni qo'ying)
-                const response = await fetch('https://SIZNING-BACKEND-LINKINGIZ.vercel.app/ask', {
+                // 3. API-ga so'rov yuborish
+                // Eslatma: Agar WebApp va API bitta Vercel loyihasida bo'lsa, 
+                // to'liq manzil o'rniga '/api/chat' dan foydalanish kifoya
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: text })
+                    body: JSON.stringify({ message: text }) // Backend 'message' kutyapti
                 });
+                
                 const data = await response.json();
-
+        
                 // 4. Javobni ekranga chiqarish
-                document.getElementById(loadingId).innerText = data.answer;
+                // Backend 'reply' kaliti bilan javob qaytaryapti
+                document.getElementById(loadingId).innerText = data.reply;
+                
             } catch (e) {
-                document.getElementById(loadingId).innerText = "Xatolik yuz berdi. Backend ulanmagan bo'lishi mumkin.";
+                console.error("Xatolik:", e);
+                document.getElementById(loadingId).innerText = "Xatolik yuz berdi. Backend bilan bog'lanib bo'lmadi.";
             }
             container.scrollTop = container.scrollHeight;
         }
